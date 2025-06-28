@@ -42,3 +42,29 @@ def create_youtuber(yt: schemas.YoutuberCreate, db: Session = Depends(get_db)):
 @app.get("/youtubers/", response_model=list[schemas.YoutuberRead])
 def get_youtubers(db: Session = Depends(get_db)):
     return db.query(Youtuber).all()
+
+
+
+def save_youtuber(username, link, email, subscribers, genre):
+    db = SessionLocal()
+    try:
+        existing = db.query(Youtuber).filter(Youtuber.link == link).first()
+        if existing:
+            print(f"⚠️ Already in DB: {link}")
+            return
+        yt = Youtuber(
+            username=username,
+            link=link,
+            email=email,
+            subscribers=subscribers,
+            genre=genre,
+        )
+        db.add(yt)
+        db.commit()
+        print(f"✅ Saved to DB: {email}")
+    except Exception as e:
+        print(f"❌ DB Error: {e}")
+    finally:
+        db.close()
+
+
