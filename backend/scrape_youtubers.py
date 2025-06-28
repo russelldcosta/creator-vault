@@ -1,15 +1,20 @@
-from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
+import undetected_chromedriver as uc
 import time
 import random
 from main import save_youtuber
 
-DRIVER_PATH = r"C:\Users\russe\OneDrive\Desktop\chromedriver-win64\chromedriver.exe"
-TAG_PAGE = "https://itch.io/games/tag-horror"
+import whisper
+import requests
+import os
+
+# Load Whisper model once
+model = whisper.load_model("base")
+
+TAG_PAGE    = "https://itch.io/games/tag-horror"
 EMAIL_QUOTA = 1
 
 
@@ -18,159 +23,215 @@ def human_sleep(min_s=1.0, max_s=2.5):
 
 
 def human_move(driver, element):
+    """Tiny random mouse movements before interacting."""
     try:
         size = element.size
         actions = ActionChains(driver)
         for _ in range(random.randint(2, 4)):
-            x_offset = random.randint(1, size['width'] - 1)
-            y_offset = random.randint(1, size['height'] - 1)
-            actions.move_by_offset(x_offset, y_offset).pause(random.uniform(0.2, 0.5))
+            x = random.randint(1, size['width'] - 1)
+            y = random.randint(1, size['height'] - 1)
+            actions.move_by_offset(x, y).pause(random.uniform(0.1, 0.3))
         actions.move_to_element(element).perform()
     except:
         pass
 
 
+def solve_audio_captcha(driver):
+    """First click checkbox, then switch to audio, transcribe, submit."""
+    try:
+        driver.switch_to.default_content()
+
+        # 1) Tick the “I’m not a robot” checkbox
+        cb_iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+            (By.XPATH, "//iframe[contains(@src,'api2/anchor')]")
+        ))
+        driver.switch_to.frame(cb_iframe)
+        checkbox = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
+            (By.ID, "recaptcha-anchor")
+        ))
+        human_move(driver, checkbox)
+        checkbox.click()
+        human_sleep(2, 3)
+        driver.switch_to.default_content()
+
+        # 2) Switch into the challenge iframe
+        ch_iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+            (By.XPATH, "//iframe[contains(@src,'api2/bframe')]")
+        ))
+        driver.switch_to.frame(ch_iframe)
+
+        # 3) Click audio challenge button
+        audio_btn = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
+            (By.ID, "recaptcha-audio-button")
+        ))
+        human_move(driver, audio_btn)
+        audio_btn.click()
+        human_sleep(2, 3)
+
+        # 4) Download and transcribe audio
+        audio_src = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+            (By.ID, "audio-source")
+        )).get_attribute("src")
+        with open(".temp.mp3", "wb") as f:
+            f.write(requests.get(audio_src).content)
+        result = model.transcribe(".temp.mp3")
+        answer = result["text"].strip()
+
+        # 5) Submit the answer
+        input_box = driver.find_element(By.ID, "audio-response")
+        input_box.send_keys(answer)
+        human_sleep(1, 2)
+        driver.find_element(By.ID, "recaptcha-verify-button").click()
+        human_sleep(3, 5)
+
+        driver.switch_to.default_content()
+        try:
+            os.remove(".temp.mp3")
+        except:
+            pass
+
+        return True
+
+    except Exception as e:
+        print("⚠️ CAPTCHA solve failed:", e)
+        driver.switch_to.default_content()
+        return False
+
+
 def browser():
-    opts = webdriver.ChromeOptions()
-    opts.add_experimental_option("excludeSwitches", ["enable-automation"])
-    opts.add_experimental_option("useAutomationExtension", False)
-    return webdriver.Chrome(service=Service(DRIVER_PATH), options=opts)
+    opts = uc.ChromeOptions()
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-blink-features=AutomationControlled")
+    opts.add_argument("--start-maximized")
+    return uc.Chrome(options=opts)
 
 
 def extract_channel_info(driver, iframe, seen):
     try:
+        # 1) Open video page
         vid = iframe.get_attribute("src").split("/embed/")[-1].split("?")[0]
         driver.get(f"https://www.youtube.com/watch?v={vid}")
-        WebDriverWait(driver, 5).until(EC.presence_of_element_located(
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located(
             (By.TAG_NAME, "ytd-video-primary-info-renderer")
         ))
         human_sleep(1.5, 2.5)
 
-        # Get channel element
-        channel_el = driver.find_element(By.XPATH, "//ytd-video-owner-renderer//a")
+        # 2) Grab channel URL & name
+        channel_el  = driver.find_element(By.XPATH, "//ytd-video-owner-renderer//a")
         channel_url = channel_el.get_attribute("href")
         if channel_url in seen:
             return None
         seen.add(channel_url)
-
         channel_name = channel_el.text.strip()
 
-        # ✅ FIRST: go to /about to get email (this fixes the issue)
-        driver.get(channel_url.rstrip("/") + "/about")
-        WebDriverWait(driver, 5).until(EC.presence_of_element_located(
+        # 3) Go straight to About to get email
+        driver.get(f"{channel_url.rstrip('/')}/about")
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located(
             (By.ID, "additional-info-container")
         ))
         human_sleep(1.5, 2.5)
 
+        # 4) Scroll & click View Email
         more_info = driver.find_element(By.ID, "additional-info-container")
-        driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth'});", more_info)
+        driver.execute_script("arguments[0].scrollIntoView({behavior:'smooth'});", more_info)
         human_sleep(1.5, 2.5)
-
-        view_btn = WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+        view_btn = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
             (By.CSS_SELECTOR, "#view-email-button-container button")
         ))
         human_move(driver, view_btn)
         view_btn.click()
-        human_sleep(2.5, 3.5)
+        human_sleep(2, 3)
 
-        anchor_iframe = WebDriverWait(driver, 5).until(EC.presence_of_element_located(
-            (By.XPATH, "//iframe[contains(@src,'api2/anchor')]")
-        ))
-        driver.switch_to.frame(anchor_iframe)
+        # 5) Solve the reCAPTCHA
+        if not solve_audio_captcha(driver):
+            print("– Skipping due to captcha.")
+            return None
 
-        tick = WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
-            (By.ID, "recaptcha-anchor")
-        ))
-        human_move(driver, tick)
-        tick.click()
-        human_sleep(4.5, 6.0)
-
-        driver.switch_to.default_content()
-
+        # 6) Click submit after captcha
         submit_btn = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
             (By.ID, "submit-btn")
         ))
         human_move(driver, submit_btn)
-        human_sleep(1.5, 3.0)
         submit_btn.click()
-        human_sleep(2.5, 4.0)
+        human_sleep(2, 3)
 
+        # 7) Extract the email
         email_el = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
             (By.ID, "email")
         ))
         email = email_el.text.strip()
 
-        # ✅ THEN: go to homepage to get subscriber count (safer this way)
+        # 8) Finally, get subscriber count
         driver.get(channel_url)
-        sub_el = WebDriverWait(driver, 5).until(EC.presence_of_element_located(
+        sub_el = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
             (By.ID, "subscriber-count")
         ))
-        subscribers = sub_el.text.strip().replace(" subscribers", "").replace(",", "")
+        subs = sub_el.text.replace(" subscribers", "").replace(",", "")
         try:
-            if "K" in subscribers:
-                subscribers = int(float(subscribers.replace("K", "")) * 1_000)
-            elif "M" in subscribers:
-                subscribers = int(float(subscribers.replace("M", "")) * 1_000_000)
+            if "K" in subs:
+                subs = int(float(subs.replace("K","")) * 1_000)
+            elif "M" in subs:
+                subs = int(float(subs.replace("M","")) * 1_000_000)
             else:
-                subscribers = int(subscribers)
+                subs = int(subs)
         except:
-            subscribers = None
+            subs = None
 
         return {
-            "username": channel_name,
-            "link": channel_url,
-            "email": email,
-            "subscribers": subscribers,
-            "genre": "horror"
+            "username":    channel_name,
+            "link":        channel_url,
+            "email":       email,
+            "subscribers": subs,
+            "genre":       "horror",
         }
 
     except Exception as e:
-        print("❌ Failed to extract info:", e)
+        print("❌ extract_channel_info error:", e)
         return None
 
 
 def main():
     driver = browser()
-    wait = WebDriverWait(driver, 10)
-    seen = set()
+    wait   = WebDriverWait(driver, 10)
+    seen   = set()
     emails = []
 
     try:
+        # 1) Manual login
         driver.get("https://www.youtube.com/")
-        input("🔐 Sign in to YouTube in the opened window, then type 'continue' & press Enter → ")
+        input("🔐 Sign in & then type 'continue' → ")
 
+        # 2) Scrape each embedded video
         driver.get(TAG_PAGE)
         games = [a.get_attribute("href") for a in wait.until(
             EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".game_cell a.thumb_link"))
         )][:10]
 
-        for game_url in games:
+        for game in games:
             if len(emails) >= EMAIL_QUOTA:
                 break
-            driver.get(game_url)
+            driver.get(game)
             time.sleep(2)
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
-            human_sleep(1.2, 2.2)
+            driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
+            human_sleep(1, 2)
 
-            iframes = driver.find_elements(By.XPATH, "//iframe[contains(@src,'youtube.com/embed')]")
-            for frame in iframes:
+            frames = driver.find_elements(By.XPATH, "//iframe[contains(@src,'youtube.com/embed')]")
+            for f in frames:
                 if len(emails) >= EMAIL_QUOTA:
                     break
-                data = extract_channel_info(driver, frame, seen)
-                if data:
-                    print("✅ Collected:", data)
-                    emails.append(data["email"])
-                    save_youtuber(**data)
+                info = extract_channel_info(driver, f, seen)
+                if info:
+                    print("✅ Collected:", info)
+                    emails.append(info["email"])
+                    save_youtuber(**info)
                 else:
-                    print("– No email, skipping…")
+                    print("– No data, next…")
+                human_sleep(1, 2)
 
-                human_sleep(1.0, 2.0)
-
-        print(f"\n🎉 Done: Collected {len(emails)} emails →", emails)
+        print(f"\n🎉 Done: {len(emails)} emails →", emails)
 
     finally:
         driver.quit()
-
 
 if __name__ == "__main__":
     main()
