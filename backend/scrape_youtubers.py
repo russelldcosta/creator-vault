@@ -37,7 +37,7 @@ def human_move(driver, element):
 
 
 def solve_audio_captcha(driver):
-    """First click checkbox, then switch to audio, transcribe, submit."""
+    """First click checkbox, then optionally solve audio challenge, or detect simple tick success."""
     try:
         driver.switch_to.default_content()
 
@@ -52,7 +52,12 @@ def solve_audio_captcha(driver):
         human_move(driver, checkbox)
         checkbox.click()
         human_sleep(2, 3)
+        # Check if simple tick solved
+        checked = checkbox.get_attribute("aria-checked")
         driver.switch_to.default_content()
+        if checked == 'true':
+            # solved with single click
+            return True
 
         # 2) Switch into the challenge iframe
         ch_iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
@@ -149,7 +154,7 @@ def extract_channel_info(driver, iframe, seen):
 
         # 6) Click submit after captcha
         try:
-            submit_btn = WebDriverWait(driver, 10).until(
+            submit_btn = WebDriverWait(driver, 1).until(
                 EC.element_to_be_clickable((By.ID, "submit-btn"))
             )
             human_sleep(2, 3)
@@ -168,6 +173,7 @@ def extract_channel_info(driver, iframe, seen):
             )
             email_href = email_el.get_attribute("href")
             email = email_href.replace("mailto:", "").strip() if email_href else email_el.text.strip()
+            print("got email", email)
         except Exception as e:
             print("⚠️ Failed to find email element:", e)
             return None
