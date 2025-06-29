@@ -180,27 +180,25 @@ def extract_channel_info(driver, iframe, seen):
 
         # 8) Finally, get subscriber count
         driver.get(channel_url)
-        sub_el = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
-            (By.ID, "subscriber-count")
-        ))
-        subs = sub_el.text.replace(" subscribers", "").replace(",", "")
-        try:
-            if "K" in subs:
-                subs = int(float(subs.replace("K","")) * 1_000)
-            elif "M" in subs:
-                subs = int(float(subs.replace("M","")) * 1_000_000)
-            else:
-                subs = int(subs)
-        except:
-            subs = None
+        print("channel url - ", channel_url)
 
-        return {
-            "username":    channel_name,
-            "link":        channel_url,
-            "email":       email,
-            "subscribers": subs,
-            "genre":       "horror",
-        }
+        # 6) Subscribers safe fetch
+        subs = None
+        try:
+            driver.get(channel_url)
+            WebDriverWait(driver, 10).until(lambda d: d.find_element(By.TAG_NAME, "ytd-video-owner-renderer"))
+            sub_el = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "subscriber-count")))
+            raw = sub_el.text.replace(" subscribers", "").replace(",", "")
+            if "K" in raw:
+                subs = int(float(raw.replace("K", "")) * 1000)
+            elif "M" in raw:
+                subs = int(float(raw.replace("M", "")) * 1000000)
+            else:
+                subs = int(raw)
+        except Exception as e:
+            print("⚠️ Subscribers fetch failed:", e)
+        print(channel_name, channel_url, email, subs, "horror")
+        return {"username": channel_name, "link": channel_url, "email": email, "subscribers": subs, "genre": "horror"}
 
     except Exception as e:
         print("❌ extract_channel_info error:", e)
