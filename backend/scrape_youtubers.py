@@ -148,18 +148,29 @@ def extract_channel_info(driver, iframe, seen):
             return None
 
         # 6) Click submit after captcha
-        submit_btn = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
-            (By.ID, "submit-btn")
-        ))
-        human_move(driver, submit_btn)
-        submit_btn.click()
-        human_sleep(2, 3)
+        try:
+            submit_btn = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.ID, "submit-btn"))
+            )
+            human_sleep(2, 3)
+            human_move(driver, submit_btn)
+            submit_btn.click()
+            print("✅ Submit button clicked.")
+            human_sleep(2, 3)
+        except Exception as e:
+            print("⚠️ Failed to click submit:", e)
+            return None
 
-        # 7) Extract the email
-        email_el = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
-            (By.ID, "email")
-        ))
-        email = email_el.text.strip()
+        # 7) Wait and extract the email
+        try:
+            email_el = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.ID, "email"))
+            )
+            email_href = email_el.get_attribute("href")
+            email = email_href.replace("mailto:", "").strip() if email_href else email_el.text.strip()
+        except Exception as e:
+            print("⚠️ Failed to find email element:", e)
+            return None
 
         # 8) Finally, get subscriber count
         driver.get(channel_url)
