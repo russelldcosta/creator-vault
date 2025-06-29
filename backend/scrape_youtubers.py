@@ -178,25 +178,49 @@ def extract_channel_info(driver, iframe, seen):
             print("⚠️ Failed to find email element:", e)
             return None
 
-        # 8) Finally, get subscriber count
+
         driver.get(channel_url)
         print("channel url - ", channel_url)
 
-        # 6) Subscribers safe fetch
-        subs = None
+        
+        # 8) Go back to channel homepage to get username and subscriber count
+        driver.get(channel_url)
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+            (By.CSS_SELECTOR, "h1.dynamic-text-view-model-wiz__h1"))
+        )
+
+        # Extract username
         try:
-            driver.get(channel_url)
-            WebDriverWait(driver, 10).until(lambda d: d.find_element(By.TAG_NAME, "ytd-video-owner-renderer"))
-            sub_el = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "subscriber-count")))
-            raw = sub_el.text.replace(" subscribers", "").replace(",", "")
-            if "K" in raw:
-                subs = int(float(raw.replace("K", "")) * 1000)
-            elif "M" in raw:
-                subs = int(float(raw.replace("M", "")) * 1000000)
-            else:
-                subs = int(raw)
+            username_el = driver.find_element(By.CSS_SELECTOR, "h1.dynamic-text-view-model-wiz__h1 span")
+            channel_name = username_el.text.strip()
         except Exception as e:
-            print("⚠️ Subscribers fetch failed:", e)
+            print("⚠️ Failed to get username:", e)
+            channel_name = ""
+
+        # Extract subscriber count
+        try:
+            all_spans = driver.find_elements(By.CSS_SELECTOR, "span.yt-core-attributed-string")
+            subs = None
+            for span in all_spans:
+                txt = span.text.strip()
+                if "subscribers" in txt:
+                    subs = txt.replace("subscribers", "").strip()
+                    break
+
+            # Convert subscriber string like "110M" to int
+            if subs:
+                if "K" in subs:
+                    subs = int(float(subs.replace("K", "")) * 1_000)
+                elif "M" in subs:
+                    subs = int(float(subs.replace("M", "")) * 1_000_000)
+                elif "B" in subs:
+                    subs = int(float(subs.replace("B", "")) * 1_000_000_000)
+                else:
+                    subs = int(subs.replace(",", ""))
+        except Exception as e:
+            print("⚠️ Failed to get subscribers:", e)
+            subs = None
+
         print(channel_name, channel_url, email, subs, "horror")
         return {"username": channel_name, "link": channel_url, "email": email, "subscribers": subs, "genre": "horror"}
 
