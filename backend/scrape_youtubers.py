@@ -25,7 +25,7 @@ def human_move(driver, element):
         actions = ActionChains(driver)
         for _ in range(random.randint(2, 4)):
             x = random.randint(1, size['width'] - 1)
-            y = random.randint(1, size['height'] - 1)
+            y = random.randint(1, size['height'] - 1)   
             actions.move_by_offset(x, y).pause(random.uniform(0.1, 0.3))
         actions.move_to_element(element).perform()
     except:
@@ -230,6 +230,7 @@ def main():
     links = db.query(Youtuber.link).all()
     seen   = set(link[0] for link in links)
     db.close()  
+
     driver = browser()
     wait   = WebDriverWait(driver, 10)
     emails = []
