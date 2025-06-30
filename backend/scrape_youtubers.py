@@ -1,21 +1,17 @@
+import time, random, os, requests, whisper, undetected_chromedriver as uc
+from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver import ActionChains
-import undetected_chromedriver as uc
-import time
-import random
 from main import save_youtuber
+from models import Youtuber, SessionLocal
 
-import whisper
-import requests
-import os
 
 # Load Whisper model once
 model = whisper.load_model("base")
 
 TAG_PAGE    = "https://itch.io/games/tag-horror"
-EMAIL_QUOTA = 1
+EMAIL_QUOTA = 10
 
 
 def human_sleep(min_s=1.0, max_s=2.5):
@@ -230,9 +226,12 @@ def extract_channel_info(driver, iframe, seen):
 
 
 def main():
+    db = SessionLocal()
+    links = db.query(Youtuber.link).all()
+    seen   = set(link[0] for link in links)
+    db.close()  
     driver = browser()
     wait   = WebDriverWait(driver, 10)
-    seen   = set()
     emails = []
 
     try:
@@ -269,8 +268,6 @@ def main():
 
         print(f"\n🎉 Done: {len(emails)} emails →", emails)
 
-    finally:
-        driver.quit()
+    finally:    driver.quit()
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__":  main()
