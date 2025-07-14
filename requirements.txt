@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+selenium
+undetected-chromedriver
+requests
+psycopg2-binary
+python-dotenv

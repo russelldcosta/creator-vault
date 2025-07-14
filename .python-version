@@ -1,0 +1,2 @@
+3.11
+## This project requires **Python 3.11** (due to `undetected-chromedriver` needing `distutils`)       when deploying put this text on runtime.txt
