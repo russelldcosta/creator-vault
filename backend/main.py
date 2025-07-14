@@ -1,70 +1,79 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
 from models import Youtuber, SessionLocal
+from pydantic import BaseModel
 import schemas
 
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+# Gmail config
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+SENDER_EMAIL = "russelldcosta7@gmail.com"
+SENDER_PASSWORD = "ofaz bxcf wgsj epxw"
 
 app = FastAPI()
-
-# CORS for frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000"], allow_methods=["*"], allow_headers=["*"],)      # CORS for frontend
 
 # Dependency
 def get_db():
     db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-@app.post("/youtubers/", response_model=schemas.YoutuberRead)
-def create_youtuber(yt: schemas.YoutuberCreate, db: Session = Depends(get_db)):
-    existing = db.query(Youtuber).filter(Youtuber.link == str(yt.link)).first()
-    if existing:
-        print("-- Duplicate Youtuber, Skipped. --")
-        return existing
-
-    db_yt = Youtuber(**yt.model_dump(mode="json"))  #converts the Pydantic model — including HttpUrl — to plain JSON-safe Python types (str, int, etc.).
-    db.add(db_yt)
-    db.commit()
-    db.refresh(db_yt)
-    return db_yt
-
-
-@app.get("/youtubers/", response_model=list[schemas.YoutuberRead])
-def get_youtubers(db: Session = Depends(get_db)):
-    return db.query(Youtuber).all()
-
+    try:        yield db
+    finally:    db.close()
 
 
 def save_youtuber(username, link, email, subscribers, genre):
     db = SessionLocal()
     try:
         existing = db.query(Youtuber).filter(Youtuber.link == link).first()
-        if existing:
-            print(f"⚠️ Already in DB: {link}")
-            return
-        yt = Youtuber(
-            username=username,
-            link=link,
-            email=email,
-            subscribers=subscribers,
-            genre=genre,
-        )
+        if existing:                        return  # already in db
+        yt = Youtuber(username=username, link=link, email=email, subscribers=subscribers, genre=genre,)
         db.add(yt)
         db.commit()
         print(f"✅ Saved to DB: {email}")
-    except Exception as e:
-        print(f"❌ DB Error: {e}")
-    finally:
-        db.close()
+    except Exception as e:                  print(f"❌ DB Error: {e}")
+    finally:                                db.close()
 
 
+
+
+
+
+
+
+# Request model
+class EmailRequest(BaseModel):
+    subject: str
+    body: str
+
+@app.post("/send-emails")
+def send_emails(payload: EmailRequest):
+    db: Session = SessionLocal()
+    youtubers = db.query(Youtuber).filter(Youtuber.email.isnot(None)).all()
+
+    if not youtubers:   raise HTTPException(status_code=404, detail="No emails found.")
+
+    for youtuber in youtubers:
+        # Personalize email
+        personalized_subject = payload.subject.replace("{{name}}", youtuber.username)
+        personalized_body = payload.body.replace("{{name}}", youtuber.username)
+
+        # Compose message
+        msg = MIMEMultipart()
+        msg["From"] = SENDER_EMAIL
+        msg["To"] = youtuber.email
+        msg["Subject"] = personalized_subject
+        msg.attach(MIMEText(personalized_body, "plain"))
+
+        try:
+            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                server.starttls()
+                server.login(SENDER_EMAIL, SENDER_PASSWORD)
+                server.sendmail(SENDER_EMAIL, youtuber.email, msg.as_string())
+        except Exception as e:      print(f"❌ Failed to send to {youtuber.username}: {e}")
+
+    db.close()
+    return {"message": "Emails sent successfully"}
