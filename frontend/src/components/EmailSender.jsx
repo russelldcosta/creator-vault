@@ -7,17 +7,17 @@ const EmailSender = () => {
   );
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const API_BASE = process.env.REACT_APP_BACKEND_URL.replace(/\/+$/, ""); // remove trailing slash
+  const API_BASE = process.env.REACT_APP_BACKEND_URL.replace(/\/+$/, "");
 
   const sendEmails = async () => {
     setLoading(true);
     setStatus("");
     try {
-        const response = await fetch(`${API_BASE}/send-emails`, {
+      const response = await fetch(`${API_BASE}/send-emails`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subject, body }),
-        });
+      });
 
       if (response.ok) {
         setStatus("✅ Emails sent successfully!");
@@ -32,32 +32,89 @@ const EmailSender = () => {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: "auto", padding: 20 }}>
-      <h2>Mass Email Sender</h2>
+    <div style={styles.wrapper}>
+      <h1 style={styles.title}>Mass Email Sender</h1>
 
-      <label>Subject:</label>
+      <label style={styles.label}>Subject</label>
       <input
         type="text"
         value={subject}
         onChange={(e) => setSubject(e.target.value)}
-        style={{ width: "100%", marginBottom: 10 }}
+        style={styles.input}
       />
 
-      <label>Body:</label>
+      <label style={styles.label}>Body</label>
       <textarea
         rows="10"
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        style={{ width: "100%", marginBottom: 10 }}
+        style={styles.textarea}
       />
 
-      <button onClick={sendEmails} disabled={loading}>
+      <button onClick={sendEmails} disabled={loading} style={styles.button}>
         {loading ? "Sending..." : "Send Emails"}
       </button>
 
-      {status && <p style={{ marginTop: 10 }}>{status}</p>}
+      {status && <p style={styles.status}>{status}</p>}
     </div>
   );
+};
+
+const styles = {
+  wrapper: {
+    maxWidth: 640,
+    margin: "60px auto",
+    padding: "30px",
+    backgroundColor: "#f9f9f9",
+    borderRadius: "12px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+    fontFamily: "'Helvetica Neue', sans-serif",
+    color: "#333",
+  },
+  title: {
+    fontSize: "24px",
+    marginBottom: "20px",
+    fontWeight: "500",
+  },
+  label: {
+    display: "block",
+    fontSize: "14px",
+    marginBottom: "6px",
+    marginTop: "16px",
+  },
+  input: {
+    width: "100%",
+    padding: "10px 12px",
+    fontSize: "14px",
+    border: "1px solid #ccc",
+    borderRadius: "6px",
+    outline: "none",
+    boxSizing: "border-box",
+  },
+  textarea: {
+    width: "100%",
+    padding: "12px",
+    fontSize: "14px",
+    border: "1px solid #ccc",
+    borderRadius: "6px",
+    outline: "none",
+    boxSizing: "border-box",
+  },
+  button: {
+    marginTop: "24px",
+    padding: "10px 20px",
+    backgroundColor: "#4A90E2",
+    color: "#fff",
+    fontSize: "14px",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    transition: "background 0.2s ease",
+  },
+  status: {
+    marginTop: "16px",
+    fontSize: "14px",
+  },
 };
 
 export default EmailSender;

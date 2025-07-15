@@ -19,10 +19,7 @@ SMTP_PORT = 587
 SENDER_EMAIL = "russelldcosta7@gmail.com"
 SENDER_PASSWORD = "ofaz bxcf wgsj epxw"         #From Google App Passwords
 
-origins = [
-    "https://creator-vault-react.vercel.app",  # ✅ Replace with your real frontend URL
-    "http://localhost:3000",             # Optional: for local testing
-]
+origins = ["https://creator-vault-react.vercel.app",  "http://localhost:3000",]
 
 app = FastAPI()
 
