@@ -1,4 +1,6 @@
 # https://creator-vault-iaxy.onrender.com/
+# uvicorn main:app --host 0.0.0.0 --port 10000
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -9,6 +11,7 @@ import schemas
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from fastapi.responses import FileResponse
 
 # Gmail config
 SMTP_SERVER = "smtp.gmail.com"
@@ -53,6 +56,11 @@ def save_youtuber(username, link, email, subscribers, genre):
 
 
 
+
+
+@app.get("/manifest.json")
+def manifest():
+    return FileResponse("path/to/manifest.json")
 
 
 
