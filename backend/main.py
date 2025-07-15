@@ -13,7 +13,7 @@ from email.mime.multipart import MIMEMultipart
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SENDER_EMAIL = "russelldcosta7@gmail.com"
-SENDER_PASSWORD = "ofaz bxcf wgsj epxw"
+SENDER_PASSWORD = "ofaz bxcf wgsj epxw"         #From Google App Passwords
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000"], allow_methods=["*"], allow_headers=["*"],)      # CORS for frontend
