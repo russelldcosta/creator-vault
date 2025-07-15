@@ -7,18 +7,17 @@ const EmailSender = () => {
   );
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const API_BASE = process.env.REACT_APP_BACKEND_URL;
+  const API_BASE = process.env.REACT_APP_BACKEND_URL.replace(/\/+$/, ""); // remove trailing slash
 
   const sendEmails = async () => {
     setLoading(true);
     setStatus("");
     try {
-      const response = await fetch(`${API_BASE}/send-emails`, {
+        const response = await fetch(`${API_BASE}/send-emails`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subject, body }),
-      });
+        });
 
       if (response.ok) {
         setStatus("✅ Emails sent successfully!");
