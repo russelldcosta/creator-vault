@@ -16,10 +16,20 @@ SMTP_PORT = 587
 SENDER_EMAIL = "russelldcosta7@gmail.com"
 SENDER_PASSWORD = "ofaz bxcf wgsj epxw"         #From Google App Passwords
 
-origins = ["https://your-frontend.vercel.app",]  # 🔁 replace with your actual deployed frontend URL
+origins = [
+    "https://your-frontend.vercel.app",  # ✅ Replace with your real frontend URL
+    "http://localhost:3000",             # Optional: for local testing
+]
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins= origins, allow_methods=["*"], allow_headers=["*"],)      # CORS for frontend, allow_origins =["http://localhost:3000"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,               # OR use ["*"] for dev (not for production)
+    allow_credentials=True,
+    allow_methods=["*"],                 # ✅ Allow all HTTP methods (GET, POST, OPTIONS, etc.)
+    allow_headers=["*"],                 # ✅ Allow all headers (e.g. Content-Type)
+)
 
 # Dependency
 def get_db():
