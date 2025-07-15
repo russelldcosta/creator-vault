@@ -1,3 +1,4 @@
+# https://creator-vault-iaxy.onrender.com/
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -15,8 +16,10 @@ SMTP_PORT = 587
 SENDER_EMAIL = "russelldcosta7@gmail.com"
 SENDER_PASSWORD = "ofaz bxcf wgsj epxw"         #From Google App Passwords
 
+origins = ["https://your-frontend.vercel.app",]  # 🔁 replace with your actual deployed frontend URL
+
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000"], allow_methods=["*"], allow_headers=["*"],)      # CORS for frontend
+app.add_middleware(CORSMiddleware, allow_origins= origins, allow_methods=["*"], allow_headers=["*"],)      # CORS for frontend, allow_origins =["http://localhost:3000"]
 
 # Dependency
 def get_db():

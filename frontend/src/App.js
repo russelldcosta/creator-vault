@@ -1,8 +1,6 @@
-// App.js
 import React from 'react';
 import './App.css';
 import EmailSender from './components/EmailSender';
-
 
 function App() {
   return (
@@ -13,6 +11,7 @@ function App() {
 }
 
 export default App;
+
 
 
 // npm install react-scripts

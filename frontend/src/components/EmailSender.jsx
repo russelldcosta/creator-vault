@@ -1,5 +1,3 @@
-// EmailSender.jsx
-
 import React, { useState } from "react";
 
 const EmailSender = () => {
@@ -10,11 +8,13 @@ const EmailSender = () => {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const API_BASE = process.env.REACT_APP_BACKEND_URL;
+
   const sendEmails = async () => {
     setLoading(true);
     setStatus("");
     try {
-      const response = await fetch("http://localhost:8000/send-emails", {
+      const response = await fetch(`${API_BASE}/send-emails`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subject, body }),
