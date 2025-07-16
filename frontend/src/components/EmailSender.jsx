@@ -74,9 +74,27 @@ const EmailSender = () => {
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(enhancedText);
-    alert("Copied to clipboard!");
+    const textarea = document.createElement("textarea");
+    textarea.value = enhancedText;
+    textarea.style.position = "fixed";  // prevent scroll jump
+    textarea.style.opacity = 0;
+    textarea.style.pointerEvents = "none";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    try {
+      const successful = document.execCommand("copy");
+      if (successful) {
+        alert("Copied to clipboard!");
+      } else {
+        alert("Copy failed. Please try manually.");
+      }
+    } catch (err) {
+      alert("Copy failed. Please try manually.");
+    }
+    document.body.removeChild(textarea);
   };
+
 
   return (
     <div style={styles.wrapper}>
