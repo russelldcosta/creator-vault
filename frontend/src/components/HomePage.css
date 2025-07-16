@@ -9,10 +9,19 @@ body {
   background: #fff;
 }
 
+/* Prevent horizontal scrolling */
+body, html {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+
 .homepage {
   text-align: center;
   padding: 0;
   background: #ffffff;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 
