@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import EmailSender from "./EmailSender";
 import "./HomePage.css";
@@ -6,11 +6,19 @@ import Navbar from "./Navbar";
 
 const CategoryEmailPage = () => {
   const [category, setCategory] = useState("");
+  const emailSectionRef = useRef(null);
   const navigate = useNavigate();
+
+  // Scroll when category changes and is non-empty
+  useEffect(() => {
+    if (category && emailSectionRef.current) {
+      emailSectionRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [category]);
 
   return (
     <div className="homepage">
-    <Navbar />
+      <Navbar />
 
       <section className="how-section">
         <h2 className="section-title">My product is best described as...</h2>
@@ -33,15 +41,11 @@ const CategoryEmailPage = () => {
       </section>
 
       {category && (
-        <section className="how-section">
+        <section className="how-section" ref={emailSectionRef}>
           <h2 className="section-title">
             Mass Email Send to: <em>{category}</em> Creators
           </h2>
           <EmailSender selectedCategory={category} />
-
-          {/* Back to Home Button */}
-          <div style={{ marginTop: "20px", textAlign: "center" }}>
-          </div>
         </section>
       )}
     </div>

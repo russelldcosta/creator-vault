@@ -114,7 +114,7 @@ class EnhanceInput(BaseModel):
 @app.post("/enhance-text")
 def enhance_text(data: EnhanceInput):
     headers = {"Content-Type": "application/json"}
-    prompt = f"Rewrite the following text to sound more professional, clearer, and engaging:\n\n{data.user_text}"
+    prompt = f"You're responsible for rewriting the following text to sound more professional, clearer, and engaging which will be sent to Big Youtubers:\n\n{data.user_text}"
     body = {
         "contents": [{"parts": [{"text": prompt}]}]
     }
