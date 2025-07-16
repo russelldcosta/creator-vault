@@ -272,3 +272,61 @@ body {
 }
 
 
+
+
+
+
+
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    padding: 20px;
+    align-items: flex-start;
+  }
+
+  .nav-logo {
+    margin-bottom: 10px;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .hero-title {
+    font-size: 28px;
+  }
+
+  .hero-subtitle {
+    font-size: 16px;
+    padding: 0 10px;
+  }
+
+  .hero-button {
+    font-size: 14px;
+    padding: 10px 18px;
+  }
+
+  .how-section {
+    padding: 0 10px;
+  }
+
+  .steps-container {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .step-card {
+    padding: 16px;
+  }
+
+  .category-dropdown {
+    width: 100%;
+    font-size: 14px;
+  }
+}
+
+
