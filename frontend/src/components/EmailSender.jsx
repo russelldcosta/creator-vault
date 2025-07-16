@@ -8,7 +8,6 @@ const EmailSender = () => {
   );
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedText, setSelectedText] = useState("");
   const [enhancedText, setEnhancedText] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const navigate = useNavigate();
@@ -37,26 +36,36 @@ const EmailSender = () => {
     setLoading(false);
   };
 
-  const handleEnhance = async () => {
-    const selection = window.getSelection().toString();
-    if (!selection) {
-      alert("Please select some text to enhance.");
-      return;
-    }
+  const handleEnhance = () => {
     setAiLoading(true);
     setEnhancedText("");
-    try {
-      const response = await fetch(`${API_BASE}/enhance-text`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_text: selection }),
-      });
-      const data = await response.json();
-      setEnhancedText(data.enhanced_text);
-    } catch (err) {
-      setEnhancedText("❌ AI failed to enhance the text.");
-    }
-    setAiLoading(false);
+
+    // Small delay to ensure mobile Safari registers selection
+    setTimeout(async () => {
+      const selection = window.getSelection();
+      const selectedText = selection ? selection.toString().trim() : "";
+
+      if (!selectedText) {
+        alert("Please select some text to enhance.");
+        setAiLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/enhance-text`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_text: selectedText }),
+        });
+
+        const data = await response.json();
+        setEnhancedText(data.enhanced_text);
+      } catch (err) {
+        setEnhancedText("❌ AI failed to enhance the text.");
+      }
+
+      setAiLoading(false);
+    }, 100); // 100ms delay for iOS Safari
   };
 
   const copyToClipboard = () => {
@@ -79,26 +88,26 @@ const EmailSender = () => {
         rows="10"
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        style={styles.textarea}
+        style={{ ...styles.textarea, userSelect: "text" }} // Ensure selectable on mobile
       />
 
       <div style={styles.buttonRow}>
         <button
           onClick={() => navigate("/")}
-          style={{ ...styles.button, backgroundColor: "#999", marginLeft: "10px" }}
+          style={{ ...styles.button, backgroundColor: "#999" }}
         >
           ← Back
         </button>
         <button
           onClick={sendEmails}
           disabled={loading}
-          style={{ ...styles.button, marginLeft: "10px" }}
+          style={styles.button}
         >
           {loading ? "Sending..." : "Send Emails"}
         </button>
         <button
           onClick={handleEnhance}
-          style={{ ...styles.button, backgroundColor: "#28a745", marginLeft: "10px" }}
+          style={{ ...styles.button, backgroundColor: "#28a745" }}
         >
           {aiLoading ? "Enhancing..." : "✨ Enhance with AI"}
         </button>
@@ -163,7 +172,6 @@ const styles = {
     boxSizing: "border-box",
   },
   buttonRow: {
-    marginLeft: "0",
     marginTop: "24px",
     display: "flex",
     flexWrap: "wrap",
