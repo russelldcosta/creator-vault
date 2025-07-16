@@ -52,15 +52,16 @@ const EmailSender = () => {
       />
 
       <div style={styles.buttonRow}>
-        <button onClick={sendEmails} disabled={loading} style={styles.button}>
-          {loading ? "Sending..." : "Send Emails"}
-        </button>
         <button
           onClick={() => navigate("/")}
           style={{ ...styles.button, backgroundColor: "#999", marginLeft: "10px" }}
         >
           ← Back
         </button>
+        <button onClick={sendEmails} disabled={loading} style={styles.button}>
+          {loading ? "Sending..." : "Send Emails"}
+        </button>
+
       </div>
 
       {status && <p style={styles.status}>{status}</p>}

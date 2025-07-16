@@ -13,6 +13,16 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from fastapi.responses import FileResponse
 
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Gemini's AI enhancer
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+
 # Gmail config
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
@@ -89,3 +99,31 @@ def send_emails(payload: EmailRequest):
 
     db.close()
     return {"message": "Emails sent successfully"}
+
+
+
+
+
+
+
+
+
+class EnhanceInput(BaseModel):
+    user_text: str
+
+@app.post("/enhance-text")
+def enhance_text(data: EnhanceInput):
+    headers = {"Content-Type": "application/json"}
+    prompt = f"Rewrite the following text to sound more professional, clearer, and engaging:\n\n{data.user_text}"
+    body = {
+        "contents": [{"parts": [{"text": prompt}]}]
+    }
+
+    res = requests.post(GEMINI_URL, headers=headers, json=body)
+
+    if res.status_code == 200:
+        result = res.json()
+        text = result['candidates'][0]['content']['parts'][0]['text']
+        return {"enhanced_text": text}
+    else:
+        raise HTTPException(status_code=500, detail="AI service failed")
