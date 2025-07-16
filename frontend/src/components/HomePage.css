@@ -281,19 +281,48 @@ body {
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .navbar {
-    flex-direction: column;
-    padding: 20px;
-    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    overflow-x: auto;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+  }
+
+  .navbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
   }
 
   .nav-logo {
-    margin-bottom: 10px;
+    font-size: 20px;
+    margin-right: 20px;
+    white-space: nowrap;
   }
 
   .nav-links {
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    white-space: nowrap;
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .nav-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-links li a {
+    font-size: 14px;
+    padding: 6px 8px;
+    display: inline-block;
+    white-space: nowrap;
   }
 
   .hero-title {
@@ -328,5 +357,4 @@ body {
     font-size: 14px;
   }
 }
-
 

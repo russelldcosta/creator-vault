@@ -8,7 +8,11 @@ const EmailSender = () => {
   );
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
+  const [enhancedText, setEnhancedText] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const navigate = useNavigate();
+
   const API_BASE = process.env.REACT_APP_BACKEND_URL.replace(/\/+$/, "");
 
   const sendEmails = async () => {
@@ -31,6 +35,33 @@ const EmailSender = () => {
       setStatus("❌ Network error");
     }
     setLoading(false);
+  };
+
+  const handleEnhance = async () => {
+    const selection = window.getSelection().toString();
+    if (!selection) {
+      alert("Please select some text to enhance.");
+      return;
+    }
+    setAiLoading(true);
+    setEnhancedText("");
+    try {
+      const response = await fetch(`${API_BASE}/enhance-text`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_text: selection }),
+      });
+      const data = await response.json();
+      setEnhancedText(data.enhanced_text);
+    } catch (err) {
+      setEnhancedText("❌ AI failed to enhance the text.");
+    }
+    setAiLoading(false);
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(enhancedText);
+    alert("Copied to clipboard!");
   };
 
   return (
@@ -58,11 +89,38 @@ const EmailSender = () => {
         >
           ← Back
         </button>
-        <button onClick={sendEmails} disabled={loading} style={styles.button}>
+        <button
+          onClick={sendEmails}
+          disabled={loading}
+          style={{ ...styles.button, marginLeft: "10px" }}
+        >
           {loading ? "Sending..." : "Send Emails"}
         </button>
-
+        <button
+          onClick={handleEnhance}
+          style={{ ...styles.button, backgroundColor: "#28a745", marginLeft: "10px" }}
+        >
+          {aiLoading ? "Enhancing..." : "✨ Enhance with AI"}
+        </button>
       </div>
+
+      {enhancedText && (
+        <div style={{ marginTop: "20px", textAlign: "left" }}>
+          <label style={styles.label}>Enhanced Version</label>
+          <textarea
+            rows="6"
+            value={enhancedText}
+            readOnly
+            style={{ ...styles.textarea, backgroundColor: "#eef" }}
+          />
+          <button
+            onClick={copyToClipboard}
+            style={{ ...styles.button, marginTop: "10px" }}
+          >
+            📋 Copy
+          </button>
+        </div>
+      )}
 
       {status && <p style={styles.status}>{status}</p>}
     </div>
@@ -105,11 +163,11 @@ const styles = {
     boxSizing: "border-box",
   },
   buttonRow: {
-    marginLeft: "400px",
+    marginLeft: "0",
     marginTop: "24px",
     display: "flex",
-    justifyContent: "flex-start",
-    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "12px",
   },
   button: {
     padding: "10px 20px",
