@@ -1,17 +1,19 @@
+//`Hey {{name}}!,\n\nI'm -Your Name- I hope you're doing fine, I found your channel through itch.io, I make horror games, I understand your time is valuable so you could decide if you want to play my game or not by checking out the videos attached below \n\nCheers,\n-Your Name-`
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const EmailSender = () => {
   const [subject, setSubject] = useState("Hey {{name}}, exciting opportunity!");
   const [body, setBody] = useState(
-    `Hi {{name}},\n\nI'm reaching out with a cool opportunity I think you'll love!\n\nCheers,\nYour Name`
+    `Hey {{name}}!,\n\nI'm -Your Name-, hope you're doing fine, I found your channel through itch.io, I understand your time is valuable so you could decide if you want to play my game or not by checking out the videos attached below \n\nCheers,\n-Your Name-`
   );
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [enhancedText, setEnhancedText] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
-  const navigate = useNavigate();
+  const [selectedText, setSelectedText] = useState("");
 
+  const navigate = useNavigate();
   const API_BASE = process.env.REACT_APP_BACKEND_URL.replace(/\/+$/, "");
 
   const sendEmails = async () => {
@@ -36,36 +38,39 @@ const EmailSender = () => {
     setLoading(false);
   };
 
-  const handleEnhance = () => {
+  const captureSelection = () => {
+    setTimeout(() => {
+      const textarea = document.getElementById("body-textarea");
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selected = textarea.value.substring(start, end).trim();
+      setSelectedText(selected);
+    }, 50);
+  };
+
+  const handleEnhance = async () => {
+    if (!selectedText) {
+      alert("Please select some text to enhance.");
+      return;
+    }
+
     setAiLoading(true);
     setEnhancedText("");
 
-    // Small delay to ensure mobile Safari registers selection
-    setTimeout(async () => {
-      const selection = window.getSelection();
-      const selectedText = selection ? selection.toString().trim() : "";
+    try {
+      const response = await fetch(`${API_BASE}/enhance-text`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_text: selectedText }),
+      });
 
-      if (!selectedText) {
-        alert("Please select some text to enhance.");
-        setAiLoading(false);
-        return;
-      }
+      const data = await response.json();
+      setEnhancedText(data.enhanced_text);
+    } catch (err) {
+      setEnhancedText("❌ AI failed to enhance the text.");
+    }
 
-      try {
-        const response = await fetch(`${API_BASE}/enhance-text`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_text: selectedText }),
-        });
-
-        const data = await response.json();
-        setEnhancedText(data.enhanced_text);
-      } catch (err) {
-        setEnhancedText("❌ AI failed to enhance the text.");
-      }
-
-      setAiLoading(false);
-    }, 100); // 100ms delay for iOS Safari
+    setAiLoading(false);
   };
 
   const copyToClipboard = () => {
@@ -85,10 +90,13 @@ const EmailSender = () => {
 
       <label style={styles.label}>Body</label>
       <textarea
+        id="body-textarea"
         rows="10"
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        style={{ ...styles.textarea, userSelect: "text" }} // Ensure selectable on mobile
+        onMouseUp={captureSelection}
+        onTouchEnd={captureSelection}
+        style={{ ...styles.textarea, userSelect: "text" }}
       />
 
       <div style={styles.buttonRow}>
