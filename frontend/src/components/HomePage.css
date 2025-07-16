@@ -12,7 +12,16 @@ body {
 .homepage {
   text-align: center;
   padding: 0;
+  background: #ffffff;
 }
+
+
+
+
+
+
+
+
 
 /* Navbar */
 .navbar {
@@ -24,47 +33,68 @@ body {
   border-bottom: 1px solid #eee;
 }
 
-.nav-logo {
+.nav-logo a {
+  text-decoration: none;
+  color: inherit;
   font-size: 24px;
   font-weight: 700;
-  color: #333;
 }
 
+
+/* Fix the nav layout */
 .nav-links {
-  list-style: none;
   display: flex;
   gap: 30px;
+  list-style: none;       /* remove dots */
   margin: 0;
   padding: 0;
 }
 
+.nav-links li {
+  display: inline-block;
+}
+
+/* Link styling with smooth underline */
 .nav-links li a {
+  position: relative;
   text-decoration: none;
   color: #444;
   font-weight: 500;
-  transition: color 0.2s ease;
+  padding-bottom: 4px;
+  transition: color 0.3s ease;
 }
 
-.nav-links li a:hover {
-  color: #000;
+.nav-links li a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 0%;
+  background-color: #444;
+  transition: width 0.3s ease;
 }
 
-.bg {
-  padding: 80px 20px 60px;
-  max-width: 1000px;
-  margin: auto;
-  background-repeat: no-repeat;
-  background-position: center top;
-  background-size: cover;
-  border-radius: 8px;
+.nav-links li a:hover::after {
+  width: 100%;
 }
+
+
+
+
+
+
+
+
 
 
 /* Hero Section */
 .hero {
-  padding: 80px 20px 60px;
+  padding: 50px 20px 60px;
   max-width: 1000px;
   margin: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-title {
@@ -103,6 +133,31 @@ body {
   max-width: 100%;
   height: auto;
 }
+
+.hero-bg {
+  position: relative;
+  padding: 80px 20px 60px;
+  max-width: 1000px;
+  margin: auto;
+  text-align: center;
+  background-color: white;
+  background-image: radial-gradient(#d4d4d4 1px, transparent 1px);
+  background-size: 20px 20px;
+  border-radius: 8px; 
+  overflow: hidden;
+}
+
+.radial-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: white;
+  mask-image: radial-gradient(ellipse at center, transparent 20%, black);
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 20%, black);
+  z-index: 0;
+}
+
+
+
 
 /* How It Works Section */
 .how-section {
@@ -154,7 +209,7 @@ body {
 .footer {
   margin-top: 80px;
   padding: 20px;
-  background: #f9f9f9;
+  background: #282828;
   color: #777;
   font-size: 14px;
   text-align: center;
@@ -206,3 +261,14 @@ body {
   background: #ddd;
   margin: 0 10px;
 }
+
+
+.category-dropdown {
+  padding: 10px 15px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 250px;
+}
+
+

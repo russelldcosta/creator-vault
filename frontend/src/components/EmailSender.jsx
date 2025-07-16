@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const EmailSender = () => {
   const [subject, setSubject] = useState("Hey {{name}}, exciting opportunity!");
@@ -7,6 +8,7 @@ const EmailSender = () => {
   );
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const API_BASE = process.env.REACT_APP_BACKEND_URL.replace(/\/+$/, "");
 
   const sendEmails = async () => {
@@ -33,8 +35,6 @@ const EmailSender = () => {
 
   return (
     <div style={styles.wrapper}>
-      <h1 style={styles.title}>Mass Email Sender</h1>
-
       <label style={styles.label}>Subject</label>
       <input
         type="text"
@@ -51,9 +51,17 @@ const EmailSender = () => {
         style={styles.textarea}
       />
 
-      <button onClick={sendEmails} disabled={loading} style={styles.button}>
-        {loading ? "Sending..." : "Send Emails"}
-      </button>
+      <div style={styles.buttonRow}>
+        <button onClick={sendEmails} disabled={loading} style={styles.button}>
+          {loading ? "Sending..." : "Send Emails"}
+        </button>
+        <button
+          onClick={() => navigate("/")}
+          style={{ ...styles.button, backgroundColor: "#999", marginLeft: "10px" }}
+        >
+          ← Back
+        </button>
+      </div>
 
       {status && <p style={styles.status}>{status}</p>}
     </div>
@@ -70,11 +78,6 @@ const styles = {
     boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
     fontFamily: "'Helvetica Neue', sans-serif",
     color: "#333",
-  },
-  title: {
-    fontSize: "24px",
-    marginBottom: "20px",
-    fontWeight: "500",
   },
   label: {
     display: "block",
@@ -100,8 +103,14 @@ const styles = {
     outline: "none",
     boxSizing: "border-box",
   },
-  button: {
+  buttonRow: {
+    marginLeft: "400px",
     marginTop: "24px",
+    display: "flex",
+    justifyContent: "flex-start",
+    alignItems: "center",
+  },
+  button: {
     padding: "10px 20px",
     backgroundColor: "#4A90E2",
     color: "#fff",
